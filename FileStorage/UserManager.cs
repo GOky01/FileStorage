@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
-
-public static class UserManager
+﻿public static class UserManager
 {
     private static User currentUser;
 
@@ -18,6 +14,7 @@ public static class UserManager
             var user = new User(username, password);
             context.Users.Add(user);
             context.SaveChanges();
+            currentUser = user; 
             Console.WriteLine("User registered successfully.");
         }
     }
@@ -41,5 +38,37 @@ public static class UserManager
     public static User GetCurrentUser()
     {
         return currentUser;
+    }
+
+    public static void SetCurrentUser(User user)
+    {
+        currentUser = user;
+    }
+
+    public static void AddFileToCurrentUser(string filePath)
+    {
+        if (currentUser == null)
+        {
+            throw new InvalidOperationException("No user is currently logged in.");
+        }
+
+        currentUser.AddFile(filePath);
+        using (var context = new UserDbContext())
+        {
+            context.Users.Update(currentUser);
+            context.SaveChanges();
+        }
+    }
+
+    public static void ViewAllUsers()
+    {
+        using (var context = new UserDbContext())
+        {
+            var users = context.Users.ToList();
+            foreach (var user in users)
+            {
+                Console.WriteLine($"Username: {user.Username}, PasswordHash: {user.PasswordHash}");
+            }
+        }
     }
 }

@@ -1,7 +1,14 @@
-﻿class Program
+﻿using System;
+
+class Program
 {
     static void Main(string[] args)
     {
+        using (var context = new UserDbContext())
+        {
+            context.Database.EnsureCreated();
+        }
+
         while (true)
         {
             Console.WriteLine("1. Register");
@@ -72,10 +79,30 @@
 
         Console.WriteLine("Enter file path to upload:");
         string filePath = Console.ReadLine();
-        string encryptedFilePath = FileSecurity.EncryptFile(filePath);
-        currentUser.AddFile(encryptedFilePath);
-        Console.WriteLine($"File encrypted and saved to: {encryptedFilePath}");
+
+        try
+        {
+            string encryptedFilePath = FileSecurity.EncryptFile(filePath);
+            currentUser.AddFile(encryptedFilePath);
+
+            using (var context = new UserDbContext())
+            {
+                context.Users.Update(currentUser);
+                context.SaveChanges();
+            }
+
+            Console.WriteLine($"File encrypted and saved to: {encryptedFilePath}");
+        }
+        catch (FileNotFoundException)
+        {
+            Console.WriteLine($"File not found: {filePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
+
 
     static void DownloadFile()
     {
@@ -95,9 +122,21 @@
             return;
         }
 
-        string decryptedFilePath = FileSecurity.DecryptFile(encryptedFilePath);
-        Console.WriteLine($"File decrypted and saved to: {decryptedFilePath}");
+        try
+        {
+            string decryptedFilePath = FileSecurity.DecryptFile(encryptedFilePath);
+            Console.WriteLine($"File decrypted and saved to: {decryptedFilePath}");
+        }
+        catch (FileNotFoundException)
+        {
+            Console.WriteLine($"File not found: {encryptedFilePath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
+
 
     static void ViewFiles()
     {

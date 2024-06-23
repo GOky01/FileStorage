@@ -1,0 +1,17 @@
+﻿version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: stas
+      POSTGRES_PASSWORD: kbn
+      POSTGRES_DB: filestoragedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
